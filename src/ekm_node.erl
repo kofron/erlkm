@@ -22,7 +22,7 @@
 	 handle_event/3, handle_sync_event/4,handle_info/3]).
 
 % api exports
--export([input/2, switch_mode/2, set_coords/2]).
+-export([ask/2, learn/2, switch_mode/2, set_coords/2]).
 
 % states
 -export([analyze/2, learning/2]).
@@ -30,9 +30,13 @@
 %%%%%%%%%%%
 %%% api %%%
 %%%%%%%%%%%
--spec input(pid(), {{pid(), reference()}, list()}) -> ok.
-input(P,{{D,R},L}) ->
+-spec ask(pid(), {{pid(), reference()}, list()}) -> ok.
+ask(P,{{D,R},L}) ->
     gen_fsm:send_event(P, {input,L,{D,R}}).
+
+-spec learn(pid(), {bmu, integer(), integer(), float()}) -> ok.
+learn(P,{bmu,_X,_Y,_L}=Data) ->
+    gen_fsm:send_event(P, Data).		   
 
 -spec switch_mode(pid(), atom()) -> ok.
 switch_mode(P, learn) ->
@@ -52,17 +56,23 @@ analyze({input, L, From}, St) ->
     gen_fsm:reply(From, Payload),
     {next_state, analyze, St}.
 
-learning({input, L, _From}, State) ->
-    NewState = acclimate(L, State),
+learning({bmu, X, Y, L}, State) ->
+    NewState = acclimate({X,Y,L}, State),
     {next_state, learning, NewState}.
 
 %%%%%%%%%%%%%%%%
 %%% internal %%%
 %%%%%%%%%%%%%%%%
 -spec acclimate(list(), record()) -> record().
-acclimate(L, State) -> % move each element of vector closer randomly
-    Change = lists:map( fun({X1,X2}) -> random:uniform()*(X1-X2) end,
+acclimate({X,Y,L}, State) -> % move each element of vector closer randomly
+    Closer = lists:map( fun({X1,X2}) -> random:uniform()*(X1-X2) end,
 			lists:zip(L, State#state.v)),
+    Change = lists:map( fun(C) -> 
+				math:abs(math:exp(-1.0*
+					 cartesian_distance([X,Y], 
+							    State#state.v)))*
+				    C
+			end, Closer),
     State#state{v = vectoradd(State#state.v, Change)}.
 
 -spec vectoradd(list(), list()) -> list().
@@ -83,6 +93,8 @@ cartesian_distance(L1,L2) ->
 
 -spec random_vector(integer()) -> list().
 random_vector(Length) ->
+    {A,B,C} = erlang:now(),
+    random:seed(A,B,C),
     random_vector(Length, []).
 random_vector(0, Acc) ->
     Acc;
