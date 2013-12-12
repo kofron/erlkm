@@ -48,4 +48,4 @@ score(#node_data{data_mod=M, data=D}, Sample) ->
 %% @spec update(node_data(), term(), float()) -> node_data().
 -spec update(node_data(), term(), float()) -> node_data().
 update(#node_data{data_mod=M, data=D}=ND, Sample, Prefactor) ->
-    ND#node_data{data=M:scale(M:subtract(D,Sample), Prefactor)}.
+    ND#node_data{data=M:add(D, M:scale(M:subtract(D,Sample), Prefactor))}.
