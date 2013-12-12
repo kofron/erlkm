@@ -1,0 +1,10 @@
+*~
+*#
+#*
+apps/*/ebin
+ebin/*
+rebar
+lib/
+priv/*.so
+rel/dripline.eunit/
+.eunit
