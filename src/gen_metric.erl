@@ -1,7 +1,9 @@
 %% @doc gen_metric defines a behavior module for types which some notion of
 %% distance between two concrete instantation of those types.  It requires
 %% a function, distance/2, which maps two things of type X onto the real number
-%% line.  See euclidian_vector.erl for an example.
+%% line.  In addition, there must be some concept of addition and subtraction
+%% over the set which the objects belong to.  See euclidian_vector.erl for an 
+%% example.
 %% @author Jared Kofron <jared.kofron.at.work@gmail.com>
 -module(gen_metric).
 
@@ -19,3 +21,16 @@
 %% elements of P and Q.
 -callback distance(X,X) ->
     float().
+
+%% @doc add/2 adds the two objects together and returns the result.
+-callback add(X,X) ->
+    X.
+
+%% @doc subtract/2 subtracts the two objects A and B and returns C 
+%% s.t. C = A - B.
+-callback subtract(X,X) ->
+    X.
+
+%% @doc scale/2 scales an object V by a scalar value S.
+-callback scale(X, float()) ->
+    X.
